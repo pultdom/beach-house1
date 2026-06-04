@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beach House — Smart Home</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0d0d1a;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #fff;
+    overflow: hidden;
+  }
+
+  .phone-frame {
+    width: 390px;
+    height: 844px;
+    background: #1a1a2e;
+    border-radius: 40px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 80px rgba(124, 92, 252, 0.2);
+    border: 3px solid #2a2a3e;
+  }
+
+  .screen {
+    display: none;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 20px;
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  .screen.active { display: flex; }
+  .screen::-webkit-scrollbar { display: none; }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .header-title {
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    flex: 1;
+  }
+
+  .hamburger {
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    background: none;
+    border: none;
+    color: #fff;
+  }
+
+  .header-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c5cfc, #a78bfa);
+    cursor: pointer;
+    border: none;
+    transition: transform 0.3s;
+  }
+
+  .header-dot:hover { transform: scale(1.1); }
+
+  /* ROOM TABS */
+  .room-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .room-tab {
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    background: transparent;
+    color: #888;
+    border: 1px solid #333;
+    transition: all 0.3s;
+    font-weight: 500;
+  }
+
+  .room-tab.active {
+    background: #7c5cfc;
+    color: #fff;
+    border-color: #7c5cfc;
+  }
+
+  .room-tab:hover:not(.active) {
+    border-color: #7c5cfc;
+    color: #7c5cfc;
+  }
+
+  /* GREETING */
+  .greeting { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .home-select {
+    font-size: 16px;
+    color: #888;
+    margin-bottom: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: #888;
+  }
+  .home-select::after { content: '▾'; font-size: 12px; }
+
+  /* STATUS BAR */
+  .status-bar {
+    background: #252545;
+    border-radius: 20px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+
+  .status-bar-title {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: #7c5cfc;
+    margin-bottom: 14px;
+  }
+
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .status-row:last-child { margin-bottom: 0; }
+
+  .status-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+  }
+
+  .status-icon { font-size: 18px; width: 24px; text-align: center; }
+
+  /* TOGGLE */
+  .toggle {
+    width: 50px;
+    height: 28px;
+    background: #444;
+    border-radius: 14px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+    border: none;
+    padding: 0;
+  }
+
+  .toggle.on { background: #7c5cfc; }
+
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s;
+  }
+
+  .toggle.on::after { transform: translateX(22px); }
+
+  /* BOTTOM ROWS */
+  .bottom-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .bottom-card {
+    flex: 1;
+    background: #252545;
+    border-radius: 20px;
+    padding: 16px;
+  }
+
+  .bottom-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #7c5cfc;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .device-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+
+  .device-row:last-child { margin-bottom: 0; }
+
+  .device-row-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .scene-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 0;
+    transition: opacity 0.3s;
+  }
+
+  .scene-row:last-child { margin-bottom: 0; }
+  .scene-row:hover { opacity: 0.8; }
+
+  .scene-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    flex-shrink: 0;
+  }
+
+  .scene-dot.active {
+    border-color: #7c5cfc;
+    background: #7c5cfc;
+  }
+
+  .scene-dot.active::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 12px 0;
+    margin-top: auto;
+    border-top: 1px solid #2a2a3e;
+  }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    color: #666;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 8px 16px;
+    transition: all 0.3s;
+    border-radius: 12px;
+  }
+
+  .nav-btn.active { color: #7c5cfc; background: rgba(124,92,252,0.1); }
+  .nav-btn:hover { color: #7c5cfc; }
+
+  /* ROOM DETAIL */
+  .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .back-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    transition: transform 0.3s;
+  }
+
+  .back-btn:hover { transform: translateX(-3px); }
+
+  .detail-title {
+    font-size: 22px;
+    font-weight: 700;
+    flex: 1;
+    text-align: center;
+  }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: #252545;
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.3s;
+    cursor: default;
+  }
+
+  .stat-card:hover { transform: scale(1.03); }
+
+  .stat-icon { font-size: 28px; width: 40px; text-align: center; }
+  .stat-info { flex: 1; }
+  .stat-value { font-size: 16px; font-weight: 700; }
+  .stat-label { font-size: 11px; color: #888; }
+
+  /* DEVICE CARDS */
+  .devices-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .device-card {
+    background: #252545;
+    border-radius: 20px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .device-card:hover {
+    background: #303060;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(124,92,252,0.2);
+  }
+
+  .device-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .device-card-icon { font-size: 28px; }
+  .device-card-name { font-size: 14px; font-weight: 600; margin-top: 8px; }
+
+  /* DEVICE CONTROL */
+  .control-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .control-sub-header {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+  }
+
+  .control-sub-icon {
+    font-size: 24px;
+    opacity: 0.4;
+    cursor: pointer;
+    padding: 10px;
+    transition: all 0.3s;
+    border-radius: 12px;
+    background: none;
+    border: none;
+    color: #fff;
+  }
+
+  .control-sub-icon.active {
+    opacity: 1;
+    background: rgba(124,92,252,0.2);
+  }
+
+  .control-sub-icon:hover { opacity: 0.8; }
+
+  .control-device-name {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 30px;
+  }
+
+  .control-circle {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124,92,252,0.5) 0%, rgba(124,92,252,0.05) 70%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 30px;
+    font-size: 48px;
+    font-weight: 700;
+    transition: all 0.5s;
+    position: relative;
+  }
+
+  .control-circle::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 2px solid rgba(124,92,252,0.2);
+  }
+
+  .control-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 0 40px;
+  }
+
+  .ctrl-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid #7c5cfc;
+    background: transparent;
+    color: #7c5cfc;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .ctrl-btn:hover { background: #7c5cfc; color: #fff; }
+  .ctrl-btn:active { transform: scale(0.9); }
+
+  .power-btn {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 2px solid #555;
+    background: transparent;
+    color: #888;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .power-btn.on {
+    background: #7c5cfc;
+    border-color: #7c5cfc;
+    color: #fff;
+    box-shadow: 0 0 20px rgba(124,92,252,0.4);
+  }
+
+  .control-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: auto;
+    padding-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    background: #252545;
+    border: 2px solid transparent;
+    border-radius: 16px;
+    padding: 12px 16px;
+    color: #888;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s;
+    min-width: 72px;
+  }
+
+  .action-btn:hover { border-color: #7c5cfc; color: #7c5cfc; }
+  .action-btn.active { background: #7c5cfc; color: #fff; border-color: #7c5cfc; }
+  .action-btn-icon { font-size: 22px; }
+
+  /* MODE SELECTOR */
+  .mode-selector {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .mode-btn {
+    padding: 10px 18px;
+    border-radius: 14px;
+    border: 2px solid #333;
+    background: #252545;
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mode-btn:hover { border-color: #7c5cfc; }
+  .mode-btn.active { background: #7c5cfc; color: #fff; border-color: #7c5cfc; }
+
+  /* SLIDER */
+  .slider-container {
+    width: 80%;
+    margin: 0 auto 20px;
+    padding: 0 20px;
+  }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #888;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: #333;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #7c5cfc;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(124,92,252,0.5);
+  }
+
+  /* COLOR PICKER */
+  .color-picker {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .color-dot {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.3s;
+  }
+
+  .color-dot:hover { transform: scale(1.2); }
+  .color-dot.active { border-color: #fff; transform: scale(1.15); }
+
+  /* TIMER MODAL */
+  .modal-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    border-radius: 40px;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: #252545;
+    border-radius: 24px;
+    padding: 30px;
+    width: 85%;
+    text-align: center;
+  }
+
+  .modal h3 { margin-bottom: 20px; color: #7c5cfc; }
+
+  .timer-display {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timer-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .timer-btn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    background: #7c5cfc;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+  }
+
+  .timer-btn:hover { background: #6a4ee0; }
+  .timer-btn.cancel { background: #444; }
+
+  /* NOTIFICATION */
+  .notification {
+    position: fixed;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: linear-gradient(135deg, #7c5cfc, #a78bfa);
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 30px;
+    font-size: 14px;
+    z-index: 1000;
+    transition: transform 0.4s ease;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(124,92,252,0.4);
+    font-weight: 500;
+  }
+
+  .notification.show { transform: translateX(-50%) translateY(0); }
+
+  /* ANIMATIONS */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .screen.active { animation: fadeIn 0.3s ease; }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .control-circle.pulse { animation: pulse 0.3s ease; }
+
+  /* FAN SPEED BARS */
+  .fan-bars {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    justify-content: center;
+    height: 60px;
+    margin-bottom: 20px;
+  }
+
+  .fan-bar {
+    width: 20px;
+    background: #333;
+    border-radius: 4px;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .fan-bar.active { background: #7c5cfc; }
+
+  /* SETTINGS SCREEN */
+  .settings-list {
+    flex: 1;
+  }
+
+  .settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #2a2a3e;
+    cursor: pointer;
+    transition: opacity 0.3s;
+  }
+
+  .settings-item:hover { opacity: 0.7; }
+
+  .settings-item-label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+  }
+
+  .settings-item-icon { font-size: 20px; width: 30px; text-align: center; }
+
+  .settings-arrow { color: #666; font-size: 18px; }
+</style>
+</head>
+<body>
+
+<div class="notification" id="notification"></div>
+
+<div class="phone-frame">
+
+  <!-- ===== SCREEN 1: DASHBOARD ===== -->
+  <div class="screen active" id="screen-dashboard">
+    <div class="header">
+      <button class="hamburger" onclick="showNotify('☰ Меню')">☰</button>
+      <div class="header-title">Beach House</div>
+      <button class="header-dot" onclick="showNotify('👤 Профиль Ksenia')"></button>
+    </div>
+
+    <div class="room-tabs">
+      <button class="room-tab active" onclick="selectTab(this, 'all')">All</button>
+      <button class="room-tab" onclick="selectTab(this, 'living')">Living Room</button>
+      <button class="room-tab" onclick="selectTab(this, 'kitchen')">Kitchen</button>
+      <button class="room-tab" onclick="selectTab(this, 'bathroom')">Bathroom</button>
+    </div>
+
+    <div class="greeting" id="greeting-text">Good Morning, Ksenia</div>
+    <button class="home-select" onclick="showNotify('🏠 My Home')">My Home</button>
+
+    <div class="status-bar">
+      <div class="status-bar-title">Status Bar</div>
+      <div class="status-row">
+        <div class="status-label"><span class="status-icon">🌙</span> Night Mode</div>
+        <button class="toggle on" onclick="toggleSwitch(this, 'Ночной режим')"></button>
+      </div>
+      <div class="status-row">
+        <div class="status-label"><span class="status-icon"></span> They left</div>
+        <button class="toggle" onclick="toggleSwitch(this, 'Они ушли')"></button>
+      </div>
+      <div class="status-row">
+        <div class="status-label"><span class="status-icon">🏡</span> House Standard</div>
+        <button class="toggle on" onclick="toggleSwitch(this, 'Стандартный режим')"></button>
+      </div>
+    </div>
+
+    <div class="bottom-row">
+      <div class="bottom-card">
+        <div class="bottom-card-title">Top Devices <span style="cursor:pointer" onclick="showNotify('♡ Избранное')">♡</span></div>
+        <div class="device-row" onclick="goToScreen('screen-light')">
+          <div class="device-row-label">☀️ Light</div>
+          <button class="toggle on" onclick="event.stopPropagation(); toggleSwitch(this, 'Свет')"></button>
+        </div>
+        <div class="device-row" onclick="goToScreen('screen-ac')">
+          <div class="device-row-label">❄️ AC</div>
+          <button class="toggle" onclick="event.stopPropagation(); toggleSwitch(this, 'Кондиционер')"></button>
+        </div>
+        <div class="device-row" onclick="showNotify('🎵 Музыкальный плеер')">
+          <div class="device-row-label">🎵 Music</div>
+          <button class="toggle" onclick="event.stopPropagation(); toggleSwitch(this, 'Музыка')"></button>
+        </div>
+        <div class="device-row" onclick="showNotify('🚶 Датчик движения')">
+          <div class="device-row-label">🚶 Motion</div>
+          <button class="toggle" onclick="event.stopPropagation(); toggleSwitch(this, 'Датчик движения')"></button>
+        </div>
+      </div>
+      <div class="bottom-card">
+        <div class="bottom-card-title">Active Scenes</div>
+        <div class="scene-row" onclick="toggleScene(this, 'Шторы')">
+          <div class="scene-dot active"></div><span>curtains</span>
+        </div>
+        <div class="scene-row" onclick="toggleScene(this, 'Тёплый пол')">
+          <div class="scene-dot"></div><span>Underfloor heating</span>
+        </div>
+        <div class="scene-row" onclick="toggleScene(this, 'Камеры')">
+          <div class="scene-dot"></div><span>Cameras</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn" onclick="showNotify('📤 Поделиться')">⤴</button>
+      <button class="nav-btn active" onclick="showNotify('🏠 Главная')"></button>
+      <button class="nav-btn" onclick="goToScreen('screen-settings')"></button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 2: LIVING ROOM ===== -->
+  <div class="screen" id="screen-livingroom">
+    <div class="detail-header">
+      <button class="back-btn" onclick="goToScreen('screen-dashboard')">←</button>
+      <div class="detail-title">Living Room</div>
+      <button class="toggle on" style="width:44px;height:24px" onclick="toggleSwitch(this, 'Комната')"></button>
+    </div>
+
+    <div class="room-tabs">
+      <button class="room-tab" onclick="selectTab(this)">All</button>
+      <button class="room-tab active" onclick="selectTab(this)">Living Room</button>
+      <button class="room-tab" onclick="selectTab(this)">Kitchen</button>
+      <button class="room-tab" onclick="selectTab(this)">Bathroom</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🌡</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-temp">26°C</div>
+          <div class="stat-label">Temperature</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💧</div>
+        <div class="stat-info">
+          <div class="stat-value">35%</div>
+          <div class="stat-label">Humidity</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-info">
+          <div class="stat-value">256k</div>
+          <div class="stat-label">Energy Usage</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">☀️</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-light">50%</div>
+          <div class="stat-label">Light intensity</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="devices-grid">
+      <div class="device-card" onclick="goToScreen('screen-light')">
+        <div class="device-card-header">
+          <div class="device-card-icon">☀️</div>
+          <button class="toggle on" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Свет')"></button>
+        </div>
+        <div class="device-card-name">Light</div>
+      </div>
+      <div class="device-card" onclick="goToScreen('screen-ac')">
+        <div class="device-card-header">
+          <div class="device-card-icon">❄️</div>
+          <button class="toggle on" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Кондиционер')"></button>
+        </div>
+        <div class="device-card-name">Air Conditioner</div>
+      </div>
+      <div class="device-card" onclick="goToScreen('screen-tv')">
+        <div class="device-card-header">
+          <div class="device-card-icon"></div>
+          <button class="toggle on" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Smart TV')"></button>
+        </div>
+        <div class="device-card-name">Smart TV</div>
+      </div>
+      <div class="device-card" onclick="showNotify(' Wi-Fi: BeachHouse_5G')">
+        <div class="device-card-header">
+          <div class="device-card-icon">📶</div>
+          <button class="toggle" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Wi-Fi')"></button>
+        </div>
+        <div class="device-card-name">Wi-fi</div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn" onclick="showNotify('📤 Поделиться')">⤴</button>
+      <button class="nav-btn active" onclick="goToScreen('screen-dashboard')">🏠</button>
+      <button class="nav-btn" onclick="goToScreen('screen-settings')">⚙</button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 3: AC CONTROL ===== -->
+  <div class="screen" id="screen-ac">
+    <div class="control-header">
+      <button class="back-btn" onclick="goToScreen('screen-livingroom')">←</button>
+      <div class="detail-title">Living Room</div>
+      <button class="toggle on" style="width:44px;height:24px" onclick="toggleSwitch(this, 'Комната')"></button>
+    </div>
+
+    <div class="control-sub-header">
+      <button class="control-sub-icon" onclick="showNotify('📺 TV')">📺</button>
+      <button class="control-sub-icon active">❄️</button>
+      <button class="control-sub-icon" onclick="showNotify('☀️ Свет')">☀️</button>
+    </div>
+
+    <div class="control-device-name">Air Conditioner</div>
+
+    <!-- Mode Selector -->
+    <div class="mode-selector">
+      <button class="mode-btn active" onclick="selectMode(this, 'cool')">️ Cool</button>
+      <button class="mode-btn" onclick="selectMode(this, 'heat')">🔥 Heat</button>
+      <button class="mode-btn" onclick="selectMode(this, 'auto')">🔄 Auto</button>
+      <button class="mode-btn" onclick="selectMode(this, 'dry')">💧 Dry</button>
+    </div>
+
+    <div class="control-circle" id="ac-circle">
+      <span id="ac-value">20°C</span>
+    </div>
+
+    <div class="control-buttons">
+      <button class="ctrl-btn" onclick="changeAC(-1)">−</button>
+      <button class="power-btn on" id="ac-power" onclick="togglePower('ac')">⏻</button>
+      <button class="ctrl-btn" onclick="changeAC(1)">+</button>
+    </div>
+
+    <!-- Fan Speed -->
+    <div style="text-align:center; margin-bottom:10px; font-size:13px; color:#888;">Fan Speed</div>
+    <div class="fan-bars" id="fan-bars">
+      <div class="fan-bar active" style="height:20px" onclick="setFanSpeed(1)"></div>
+      <div class="fan-bar active" style="height:30px" onclick="setFanSpeed(2)"></div>
+      <div class="fan-bar" style="height:40px" onclick="setFanSpeed(3)"></div>
+      <div class="fan-bar" style="height:50px" onclick="setFanSpeed(4)"></div>
+    </div>
+
+    <div class="control-actions">
+      <button class="action-btn active" onclick="selectAction(this, 'Температура')">
+        <span class="action-btn-icon">🌡</span>TEMP
+      </button>
+      <button class="action-btn" onclick="selectAction(this, 'Скорость вентилятора')">
+        <span class="action-btn-icon">💨</span>Fan
+      </button>
+      <button class="action-btn" onclick="selectAction(this, 'Режим')">
+        <span class="action-btn-icon">⚙</span>MODE
+      </button>
+      <button class="action-btn" onclick="openTimer('ac')">
+        <span class="action-btn-icon">🕐</span>TIMER
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 4: LIGHT CONTROL ===== -->
+  <div class="screen" id="screen-light">
+    <div class="control-header">
+      <button class="back-btn" onclick="goToScreen('screen-livingroom')">←</button>
+      <div class="detail-title">Living Room</div>
+      <button class="toggle on" style="width:44px;height:24px" onclick="toggleSwitch(this, 'Комната')"></button>
+    </div>
+
+    <div class="control-sub-header">
+      <button class="control-sub-icon" onclick="showNotify('❄️ AC')">❄️</button>
+      <button class="control-sub-icon active">☀️</button>
+      <button class="control-sub-icon" onclick="showNotify('📶 Wi-Fi')"></button>
+    </div>
+
+    <div class="control-device-name">Light</div>
+
+    <div class="control-circle" id="light-circle" style="background: radial-gradient(circle, rgba(255,220,100,0.5) 0%, rgba(255,220,100,0.05) 70%);">
+      <span id="light-value">80%</span>
+    </div>
+
+    <!-- Brightness Slider -->
+    <div class="slider-container">
+      <div class="slider-label">
+        <span>🔅</span>
+        <span id="slider-val">80%</span>
+        <span>🔆</span>
+      </div>
+      <input type="range" min="0" max="100" value="80" id="light-slider" oninput="changeLightFromSlider(this.value)">
+    </div>
+
+    <div class="control-buttons">
+      <button class="ctrl-btn" onclick="changeLight(-5)">−</button>
+      <button class="power-btn on" id="light-power" onclick="togglePower('light')">⏻</button>
+      <button class="ctrl-btn" onclick="changeLight(5)">+</button>
+    </div>
+
+    <!-- Color Picker -->
+    <div style="text-align:center; margin-bottom:10px; font-size:13px; color:#888;">Color</div>
+    <div class="color-picker">
+      <div class="color-dot active" style="background:#ffdc64" onclick="selectColor(this, '#ffdc64', 'Тёплый белый')"></div>
+      <div class="color-dot" style="background:#ffffff" onclick="selectColor(this, '#ffffff', 'Холодный белый')"></div>
+      <div class="color-dot" style="background:#7c5cfc" onclick="selectColor(this, '#7c5cfc', 'Фиолетовый')"></div>
+      <div class="color-dot" style="background:#ff6b6b" onclick="selectColor(this, '#ff6b6b', 'Красный')"></div>
+      <div class="color-dot" style="background:#51cf66" onclick="selectColor(this, '#51cf66', 'Зелёный')"></div>
+      <div class="color-dot" style="background:#339af0" onclick="selectColor(this, '#339af0', 'Синий')"></div>
+    </div>
+
+    <div class="control-actions">
+      <button class="action-btn active" onclick="selectAction(this, 'Яркость')">
+        <span class="action-btn-icon">☀️</span>LIGHT
+      </button>
+      <button class="action-btn" onclick="selectAction(this, 'Цвет')">
+        <span class="action-btn-icon">🎨</span>COLOR
+      </button>
+      <button class="action-btn" onclick="openTimer('light')">
+        <span class="action-btn-icon"></span>TIMER
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 5: TV CONTROL ===== -->
+  <div class="screen" id="screen-tv">
+    <div class="control-header">
+      <button class="back-btn" onclick="goToScreen('screen-livingroom')">←</button>
+      <div class="detail-title">Living Room</div>
+      <button class="toggle on" style="width:44px;height:24px" onclick="toggleSwitch(this, 'Комната')"></button>
+    </div>
+
+    <div class="control-sub-header">
+      <button class="control-sub-icon">️</button>
+      <button class="control-sub-icon">☀️</button>
+      <button class="control-sub-icon active">📺</button>
+    </div>
+
+    <div class="control-device-name">Smart TV</div>
+
+    <div class="control-circle" id="tv-circle" style="background: radial-gradient(circle, rgba(100,180,255,0.4) 0%, rgba(100,180,255,0.05) 70%);">
+      <span id="tv-value" style="font-size:28px">CH 5</span>
+    </div>
+
+    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:20px; flex-wrap:wrap;">
+      <button class="ctrl-btn" onclick="changeChannel(-1)" style="width:40px;height:40px;font-size:16px">CH−</button>
+      <button class="power-btn on" id="tv-power" onclick="togglePower('tv')">⏻</button>
+      <button class="ctrl-btn" onclick="changeChannel(1)" style="width:40px;height:40px;font-size:16px">CH+</button>
+    </div>
+
+    <div style="display:flex; gap:10px; justify-content:center; margin-bottom:20px; flex-wrap:wrap;">
+      <button class="ctrl-btn" onclick="changeVolume(-1)" style="width:40px;height:40px;font-size:16px">VOL−</button>
+      <button class="ctrl-btn" onclick="changeVolume(1)" style="width:40px;height:40px;font-size:16px">VOL+</button>
+    </div>
+
+    <div style="text-align:center; margin-bottom:15px; font-size:13px; color:#888;">Volume: <span id="tv-vol">30</span>%</div>
+    <div class="slider-container">
+      <input type="range" min="0" max="100" value="30" id="tv-slider" oninput="changeVolumeFromSlider(this.value)">
+    </div>
+
+    <div class="control-actions">
+      <button class="action-btn active" onclick="selectAction(this, 'Канал')">
+        <span class="action-btn-icon"></span>CHANNEL
+      </button>
+      <button class="action-btn" onclick="selectAction(this, 'Громкость')">
+        <span class="action-btn-icon">🔊</span>VOLUME
+      </button>
+      <button class="action-btn" onclick="selectAction(this, 'Источник')">
+        <span class="action-btn-icon"></span>INPUT
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 6: KITCHEN ===== -->
+  <div class="screen" id="screen-kitchen">
+    <div class="detail-header">
+      <button class="back-btn" onclick="goToScreen('screen-dashboard')">←</button>
+      <div class="detail-title">Kitchen</div>
+      <button class="toggle on" style="width:44px;height:24px" onclick="toggleSwitch(this, 'Кухня')"></button>
+    </div>
+
+    <div class="room-tabs">
+      <button class="room-tab" onclick="selectTab(this)">All</button>
+      <button class="room-tab" onclick="selectTab(this)">Living Room</button>
+      <button class="room-tab active" onclick="selectTab(this)">Kitchen</button>
+      <button class="room-tab" onclick="selectTab(this)">Bathroom</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🌡</div>
+        <div class="stat-info">
+          <div class="stat-value">24°C</div>
+          <div class="stat-label">Temperature</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💧</div>
+        <div class="stat-info">
+          <div class="stat-value">42%</div>
+          <div class="stat-label">Humidity</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="devices-grid">
+      <div class="device-card" onclick="showNotify(' Кухонный свет')">
+        <div class="device-card-header">
+          <div class="device-card-icon">💡</div>
+          <button class="toggle on" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Кухонный свет')"></button>
+        </div>
+        <div class="device-card-name">Kitchen Light</div>
+      </div>
+      <div class="device-card" onclick="showNotify('🫖 Умный чайник')">
+        <div class="device-card-header">
+          <div class="device-card-icon"></div>
+          <button class="toggle" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Чайник')"></button>
+        </div>
+        <div class="device-card-name">Smart Kettle</div>
+      </div>
+      <div class="device-card" onclick="showNotify('🍳 Умная плита')">
+        <div class="device-card-header">
+          <div class="device-card-icon">🍳</div>
+          <button class="toggle on" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Плита')"></button>
+        </div>
+        <div class="device-card-name">Smart Stove</div>
+      </div>
+      <div class="device-card" onclick="showNotify('🧊 Холодильник: 4°C')">
+        <div class="device-card-header">
+          <div class="device-card-icon">🧊</div>
+          <button class="toggle on" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Холодильник')"></button>
+        </div>
+        <div class="device-card-name">Fridge</div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn" onclick="showNotify(' Поделиться')">⤴</button>
+      <button class="nav-btn active" onclick="goToScreen('screen-dashboard')">🏠</button>
+      <button class="nav-btn" onclick="goToScreen('screen-settings')">⚙</button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 7: BATHROOM ===== -->
+  <div class="screen" id="screen-bathroom">
+    <div class="detail-header">
+      <button class="back-btn" onclick="goToScreen('screen-dashboard')">←</button>
+      <div class="detail-title">Bathroom</div>
+      <button class="toggle on" style="width:44px;height:24px" onclick="toggleSwitch(this, 'Ванная')"></button>
+    </div>
+
+    <div class="room-tabs">
+      <button class="room-tab" onclick="selectTab(this)">All</button>
+      <button class="room-tab" onclick="selectTab(this)">Living Room</button>
+      <button class="room-tab" onclick="selectTab(this)">Kitchen</button>
+      <button class="room-tab active" onclick="selectTab(this)">Bathroom</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🌡</div>
+        <div class="stat-info">
+          <div class="stat-value">22°C</div>
+          <div class="stat-label">Temperature</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💧</div>
+        <div class="stat-info">
+          <div class="stat-value">68%</div>
+          <div class="stat-label">Humidity</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="devices-grid">
+      <div class="device-card" onclick="showNotify('💡 Свет в ванной')">
+        <div class="device-card-header">
+          <div class="device-card-icon"></div>
+          <button class="toggle on" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Свет ванной')"></button>
+        </div>
+        <div class="device-card-name">Bathroom Light</div>
+      </div>
+      <div class="device-card" onclick="showNotify('🚿 Умный душ')">
+        <div class="device-card-header">
+          <div class="device-card-icon">🚿</div>
+          <button class="toggle" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Душ')"></button>
+        </div>
+        <div class="device-card-name">Smart Shower</div>
+      </div>
+      <div class="device-card" onclick="showNotify('🪞 Умное зеркало')">
+        <div class="device-card-header">
+          <div class="device-card-icon">🪞</div>
+          <button class="toggle on" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Зеркало')"></button>
+        </div>
+        <div class="device-card-name">Smart Mirror</div>
+      </div>
+      <div class="device-card" onclick="showNotify('🌡 Тёплый пол: 28°C')">
+        <div class="device-card-header">
+          <div class="device-card-icon">🔥</div>
+          <button class="toggle on" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Тёплый пол')"></button>
+        </div>
+        <div class="device-card-name">Floor Heating</div>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn" onclick="showNotify('📤 Поделиться')">⤴</button>
+      <button class="nav-btn active" onclick="goToScreen('screen-dashboard')">🏠</button>
+      <button class="nav-btn" onclick="goToScreen('screen-settings')">⚙</button>
+    </div>
+  </div>
+
+  <!-- ===== SCREEN 8: SETTINGS ===== -->
+  <div class="screen" id="screen-settings">
+    <div class="detail-header">
+      <button class="back-btn" onclick="goToScreen('screen-dashboard')">←</button>
+      <div class="detail-title">Settings</div>
+      <div style="width:40px"></div>
+    </div>
+
+    <div class="settings-list">
+      <div class="settings-item" onclick="showNotify('👤 Профиль: Ksenia')">
+        <div class="settings-item-label"><span class="settings-item-icon">👤</span>Profile</div>
+        <span class="settings-arrow">›</span>
+      </div>
+      <div class="settings-item" onclick="showNotify(' Дома: Beach House')">
+        <div class="settings-item-label"><span class="settings-item-icon">🏠</span>Homes</div>
+        <span class="settings-arrow">›</span>
+      </div>
+      <div class="settings-item" onclick="showNotify('‍👩‍👧 Семья: 3 участника')">
+        <div class="settings-item-label"><span class="settings-item-icon">👨‍👩‍👧</span>Family</div>
+        <span class="settings-arrow">›</span>
+      </div>
+      <div class="settings-item" onclick="showNotify('🔔 Уведомления')">
+        <div class="settings-item-label"><span class="settings-item-icon">🔔</span>Notifications</div>
+        <button class="toggle on" style="width:40px;height:22px" onclick="event.stopPropagation(); toggleSwitch(this, 'Уведомления')"></button>
+      </div>
+      <div class="settings-item" onclick="showNotify('🔒 Безопасность')">
+        <div class="settings-item-label"><span class="settings-item-icon">🔒</span>Security</div>
+        <span class="settings-arrow">›</span>
+      </div>
+      <div class="settings-item" onclick="showNotify('🌐 Язык: English')">
+        <div class="settings-item-label"><span class="settings-item-icon">🌐</span>Language</div>
+        <span class="settings-arrow">›</span>
+      </div>
+      <div class="settings-item" onclick="showNotify(' Тема: Тёмная')">
+        <div class="settings-item-label"><span class="settings-item-icon">🎨</span>Theme</div>
+        <span class="settings-arrow">›</span>
+      </div>
+      <div class="settings-item" onclick="showNotify('ℹ️ Версия 2.1.0')">
+        <div class="settings-item-label"><span class="settings-item-icon">ℹ️</span>About</div>
+        <span class="settings-arrow">›</span>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <button class="nav-btn" onclick="showNotify('📤 Поделиться')">⤴</button>
+      <button class="nav-btn" onclick="goToScreen('screen-dashboard')">🏠</button>
+      <button class="nav-btn active">⚙</button>
+    </div>
+  </div>
+
+  <!-- ===== TIMER MODAL ===== -->
+  <div class="modal-overlay" id="timer-modal">
+    <div class="modal">
+      <h3>⏰ Timer</h3>
+      <div class="timer-display" id="timer-display">00:00</div>
+      <div class="timer-btns">
+        <button class="timer-btn" onclick="setTimer(5)">5 min</button>
+        <button class="timer-btn" onclick="setTimer(15)">15 min</button>
+        <button class="timer-btn" onclick="setTimer(30)">30 min</button>
+        <button class="timer-btn" onclick="setTimer(60)">1 hour</button>
+        <button class="timer-btn cancel" onclick="closeTimer()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ===== STATE =====
+  let acTemp = 20;
+  let acOn = true;
+  let acMode = 'cool';
+  let fanSpeed = 2;
+
+  let lightLevel = 80;
+  let lightOn = true;
+  let lightColor = '#ffdc64';
+
+  let tvChannel = 5;
+  let tvVolume = 30;
+  let tvOn = true;
+
+  let timerDevice = '';
+  let timerInterval = null;
+  let timerSeconds = 0;
+
+  // ===== NAVIGATION =====
+  function goToScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // ===== TOGGLE =====
+  function toggleSwitch(el, name) {
+    el.classList.toggle('on');
+    const state = el.classList.contains('on') ? 'ВКЛ ✅' : 'ВЫКЛ ';
+    showNotify(name + ': ' + state);
+  }
+
+  // ===== TABS =====
+  function selectTab(el, room) {
+    const parent = el.parentElement;
+    parent.querySelectorAll('.room-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+
+    if (room === 'living') goToScreen('screen-livingroom');
+    else if (room === 'kitchen') goToScreen('screen-kitchen');
+    else if (room === 'bathroom') goToScreen('screen-bathroom');
+    else if (room === 'all') goToScreen('screen-dashboard');
+  }
+
+  // ===== SCENES =====
+  function toggleScene(el, name) {
+    const dot = el.querySelector('.scene-dot');
+    dot.classList.toggle('active');
+    const state = dot.classList.contains('active') ? 'активна ✅' : 'выключена ❌';
+    showNotify('Сцена "' + name + '" ' + state);
+  }
+
+  // ===== AC =====
+  function changeAC(delta) {
+    if (!acOn) { showNotify('️ Сначала включите кондиционер'); return; }
+    acTemp += delta;
+    if (acTemp < 16) acTemp = 16;
+    if (acTemp > 30) acTemp = 30;
+    document.getElementById('ac-value').textContent = acTemp + '°C';
+    document.getElementById('stat-temp').textContent = acTemp + '°C';
+    pulseCircle('ac-circle');
+    showNotify('🌡 Температура: ' + acTemp + '°C');
+  }
+
+  function togglePower(device) {
+    if (device === 'ac') {
+      acOn = !acOn;
+      document.getElementById('ac-power').classList.toggle('on', acOn);
+      document.getElementById('ac-circle').style.opacity = acOn ? '1' : '0.25';
+      showNotify('❄️ Кондиционер: ' + (acOn ? 'ВКЛ' : 'ВЫКЛ'));
+    } else if (device === 'light') {
+      lightOn = !lightOn;
+      document.getElementById('light-power').classList.toggle('on', lightOn);
+      document.getElementById('light-circle').style.opacity = lightOn ? '1' : '0.25';
+      document.getElementById('stat-light').textContent = lightOn ? lightLevel + '%' : '0%';
+      showNotify('☀️ Свет: ' + (lightOn ? 'ВКЛ' : 'ВЫКЛ'));
+    } else if (device === 'tv') {
+      tvOn = !tvOn;
+      document.getElementById('tv-power').classList.toggle('on', tvOn);
+      document.getElementById('tv-circle').style.opacity = tvOn ? '1' : '0.25';
+      showNotify('📺 TV: ' + (tvOn ? 'ВКЛ' : 'ВЫКЛ'));
+    }
+  }
+
+  function selectMode(el, mode) {
+    el.parentElement.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    acMode = mode;
+    const names = { cool: 'Охлаждение', heat: 'Обогрев', auto: 'Авто', dry: 'Осушение' };
+    showNotify('Режим: ' + names[mode]);
+  }
+
+  function setFanSpeed(level) {
+    fanSpeed = level;
+    const bars = document.querySelectorAll('#fan-bars .fan-bar');
+    bars.forEach((bar, i) => {
+      bar.classList.toggle('active', i < level);
+    });
+    showNotify('💨 Скорость вентилятора: ' + level);
+  }
+
+  // ===== LIGHT =====
+  function changeLight(delta) {
+    if (!lightOn) { showNotify('⚠️ Сначала включите свет'); return; }
+    lightLevel += delta;
+    if (lightLevel < 0) lightLevel = 0;
+    if (lightLevel > 100) lightLevel = 100;
+    updateLight();
+    pulseCircle('light-circle');
+  }
+
+  function changeLightFromSlider(val) {
+    if (!lightOn) { showNotify('️ Сначала включите свет'); return; }
+    lightLevel = parseInt(val);
+    updateLight();
+  }
+
+  function updateLight() {
+    document.getElementById('light-value').textContent = lightLevel + '%';
+    document.getElementById('slider-val').textContent = lightLevel + '%';
+    document.getElementById('light-slider').value = lightLevel;
+    document.getElementById('stat-light').textContent = lightLevel + '%';
+
+    const brightness = lightLevel / 100;
+    const circle = document.getElementById('light-circle');
+    circle.style.background = `radial-gradient(circle, ${lightColor}${Math.round(brightness * 80).toString(16).padStart(2,'0')} 0%, ${lightColor}08 70%)`;
+  }
+
+  function selectColor(el, color, name) {
+    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+    el.classList.add('active');
+    lightColor = color;
+    updateLight();
+    showNotify('🎨 Цвет: ' + name);
+  }
+
+  // ===== TV =====
+  function changeChannel(delta) {
+    if (!tvOn) { showNotify('⚠️ Сначала включите TV'); return; }
+    tvChannel += delta;
+    if (tvChannel < 1) tvChannel = 1;
+    if (tvChannel > 99) tvChannel = 99;
+    document.getElementById('tv-value').textContent = 'CH ' + tvChannel;
+    pulseCircle('tv-circle');
+    showNotify('📺 Канал: ' + tvChannel);
+  }
+
+  function changeVolume(delta) {
+    if (!tvOn) { showNotify('⚠️ Сначала включите TV'); return; }
+    tvVolume += delta;
+    if (tvVolume < 0) tvVolume = 0;
+    if (tvVolume > 100) tvVolume = 100;
+    document.getElementById('tv-vol').textContent = tvVolume;
+    document.getElementById('tv-slider').value = tvVolume;
+    showNotify('🔊 Громкость: ' + tvVolume + '%');
+  }
+
+  function changeVolumeFromSlider(val) {
+    tvVolume = parseInt(val);
+    document.getElementById('tv-vol').textContent = tvVolume;
+  }
+
+  // ===== ACTIONS =====
+  function selectAction(el, name) {
+    el.parentElement.querySelectorAll('.action-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    showNotify('⚙️ ' + name);
+  }
+
+  // ===== TIMER =====
+  function openTimer(device) {
+    timerDevice = device;
+    timerSeconds = 0;
+    document.getElementById('timer-display').textContent = '00:00';
+    document.getElementById('timer-modal').classList.add('show');
+  }
+
+  function closeTimer() {
+    document.getElementById('timer-modal').classList.remove('show');
+    clearInterval(timerInterval);
+  }
+
+  function setTimer(minutes) {
+    clearInterval(timerInterval);
+    timerSeconds = minutes * 60;
+    updateTimerDisplay();
+    showNotify('⏰ Таймер установлен: ' + minutes + ' мин');
+
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerDisplay();
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval);
+        const names = { ac: 'Кондиционер', light: 'Свет' };
+        showNotify('⏰ Таймер ' + names[timerDevice] + ' завершён!');
+        closeTimer();
+      }
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    const m = Math.floor(timerSeconds / 60);
+    const s = timerSeconds % 60;
+    document.getElementById('timer-display').textContent =
+      m.toString().padStart(2, '0') + ':' + s.toString().padStart(2, '0');
+  }
+
+  // ===== PULSE =====
+  function pulseCircle(id) {
+    const circle = document.getElementById(id);
+    circle.classList.remove('pulse');
+    void circle.offsetWidth;
+    circle.classList.add('pulse');
+  }
+
+  // ===== NOTIFICATION =====
+  let notifyTimeout;
+  function showNotify(msg) {
+    const el = document.getElementById('notification');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(notifyTimeout);
+    notifyTimeout = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
+  // ===== GREETING BY TIME =====
+  function updateGreeting() {
+    const h = new Date().getHours();
+    let greeting;
+    if (h < 6) greeting = 'Good Night, Ksenia';
+    else if (h < 12) greeting = 'Good Morning, Ksenia';
+    else if (h < 18) greeting = 'Good Afternoon, Ksenia';
+    else greeting = 'Good Evening, Ksenia';
+    document.getElementById('greeting-text').textContent = greeting;
+  }
+
+  updateGreeting();
+</script>
+
+</body>
+</html>
